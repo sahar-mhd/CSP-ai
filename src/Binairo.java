@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class Binairo {
     private final ArrayList<ArrayList<String>> board;
@@ -22,9 +23,30 @@ public class Binairo {
         state.printBoard();
         drawLine();
 
-        // backtrack(state);
+        backtrack(state);
+        drawLine();
         long tEnd = System.nanoTime();
         System.out.println("Total time: " + (tEnd - tStart)/1000000000.000000000);
+    }
+
+    //FC + MRV
+    private boolean backtrack(State initState){
+        State state;
+        ArrayList<State> nextStates;
+        Stack<State> stack = new Stack<State>();
+        stack.push(initState);
+        while(!stack.empty()){
+            state = stack.pop();
+            if(isFinished(state)) {
+                state.printBoard();
+                return true;
+            }
+            nextStates = state.children();
+            for(State s : nextStates)
+                stack.push(s);
+        }
+
+        return false;
     }
     
     private boolean checkNumberOfCircles(State state) {
