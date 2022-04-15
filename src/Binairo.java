@@ -170,7 +170,7 @@ public class Binairo {
         return allAssigned(state) && checkAdjacency(state) && checkNumberOfCircles(state) && checkIfUnique(state);
     }
 
-    private boolean isConsistent(State state) {
+    public boolean isConsistent(State state) {
         return checkNumberOfCircles(state) && checkAdjacency(state) && checkIfUnique(state);
     }
 

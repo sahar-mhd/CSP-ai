@@ -118,36 +118,66 @@ public class State {
         int m = 3;
         int mini = 0, minj = 0;
         ArrayList<State> children = new ArrayList<>();
+        ArrayList<State> visited = new ArrayList<>();
+
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if (this.getDomain().get(i).get(j).size() < m) {
+                if (this.getDomain().get(i).get(j).size() < m && !this.getDomain().get(i).get(j).contains("n")) {
                     mini = i;
                     minj = j;
                     m = this.getDomain().get(i).get(j).size();
                 }
             }
         }
-        if (m == 2)
-            child.setIndexBoard(mini, minj, "w");
-        else if (m == 1) {
-            if (this.getDomain().get(mini).get(minj).equals("w"))
+        if (m == 1) {
+            if (this.getDomain().get(mini).get(minj).contains("w"))
                 child.setIndexBoard(mini, minj, "b");
-            else if (this.getDomain().get(mini).get(minj).equals("b"))
+            else if (this.getDomain().get(mini).get(minj).contains("b"))
                 child.setIndexBoard(mini, minj, "w");
+
+            if (forwardChecking(mini, minj, child)) {
+                child.removeIndexDomain(mini, minj, "w");
+                child.removeIndexDomain(mini, minj, "b");
+                child.getDomain().get(mini).get(minj).add("n");
+                children.add(child);
+            }
+        } else if (m == 2) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (this.getDomain().get(i).get(j).size() == 2 && !this.getDomain().get(i).get(j).contains("n")) {
+                        mini = i;
+                        minj = j;
+                        child = this.copy();
+                        child.setIndexBoard(mini, minj, "w");
+                        if (forwardChecking(mini, minj, child)) {
+                            child.removeIndexDomain(mini, minj, "w");
+                            child.removeIndexDomain(mini, minj, "b");
+                            child.getDomain().get(mini).get(minj).add("n");
+                            children.add(child);
+                        }
+                        child = this.copy();
+                        child.setIndexBoard(mini, minj, "b");
+                        if (forwardChecking(mini, minj, child)) {
+                            child.removeIndexDomain(mini, minj, "w");
+                            child.removeIndexDomain(mini, minj, "b");
+                            child.getDomain().get(mini).get(minj).add("n");
+                            children.add(child);
+                        }
+                    }
+                }
+            }
+
         }
-        if(forwardChecking(mini, minj)){
-            children.add(child);
-        }
-        //else
-        //backtrack
         return children;
     }
 
-    public boolean forwardChecking(int x, int y) {
+    public boolean forwardChecking(int x, int y, State child) {
+        //check number of circles
+        //row
         int numberOfWhites = 0;
         int numberOfBlacks = 0;
         for (int j = 0; j < n; j++) {
-            String a = this.getBoard().get(x).get(j);
+            String a = child.getBoard().get(x).get(j);
             switch (a) {
                 case "w", "W" -> numberOfWhites++;
                 case "b", "B" -> numberOfBlacks++;
@@ -155,24 +185,25 @@ public class State {
         }
         if (numberOfBlacks == n / 2) {
             for (int j = 0; j < n; j++) {
-                this.removeIndexDomain(x, j, "b");
+                child.removeIndexDomain(x, j, "b");
             }
-        }
+        } else if (numberOfBlacks > n / 2) return false;
         if (numberOfWhites == n / 2) {
             for (int j = 0; j < n; j++) {
-                this.removeIndexDomain(x, j, "w");
+                child.removeIndexDomain(x, j, "w");
             }
-        }
+        } else if (numberOfWhites > n / 2) return false;
         for (int j = 0; j < n; j++) {
-            if (this.getDomain().get(x).get(j).size() == 0)
+            if (child.getDomain().get(x).get(j).size() == 0)
                 return false;
             //backtrack
         }
 
+        //column
         numberOfWhites = 0;
         numberOfBlacks = 0;
         for (int j = 0; j < n; j++) {
-            String a = this.getBoard().get(j).get(y);
+            String a = child.getBoard().get(j).get(y);
             switch (a) {
                 case "w", "W" -> numberOfWhites++;
                 case "b", "B" -> numberOfBlacks++;
@@ -180,20 +211,196 @@ public class State {
         }
         if (numberOfBlacks == n / 2) {
             for (int j = 0; j < n; j++) {
-                this.removeIndexDomain(j, y, "b");
+                child.removeIndexDomain(j, y, "b");
             }
-        }
+        } else if (numberOfBlacks > n / 2) return false;
         if (numberOfWhites == n / 2) {
             for (int j = 0; j < n; j++) {
-                this.removeIndexDomain(j, y, "w");
+                child.removeIndexDomain(j, y, "w");
             }
-        }
+        } else if (numberOfWhites > n / 2) return false;
         for (int j = 0; j < n; j++) {
-            if (this.getDomain().get(j).get(y).size() == 0)
+            if (child.getDomain().get(j).get(y).size() == 0)
                 return false;
             //backtrack
         }
 
+        //checkAdjacency
+        //Horizontal
+        for (int j = 0; j < n - 2; j++) {
+            ArrayList<String> row = child.getBoard().get(x);
+            String c1 = row.get(j).toUpperCase();
+            String c2 = row.get(j + 1).toUpperCase();
+            String c3 = row.get(j + 2).toUpperCase();
+            if (c1.equals(c2) && c2.equals(c3) && !c1.equals("E")) {
+                return false;
+            } else if (c1.equals(c2) && c1.equals("W")) {
+                child.removeIndexDomain(x, j + 2, "w");
+            } else if (c1.equals(c3) && c1.equals("W")) {
+                child.removeIndexDomain(x, j + 1, "w");
+            } else if (c1.equals(c2) && c1.equals("B")) {
+                child.removeIndexDomain(x, j + 2, "b");
+            } else if (c1.equals(c3) && c1.equals("B")) {
+                child.removeIndexDomain(x, j + 1, "b");
+            }
+        }
+
+        //column
+        for (int i = 0; i < n - 2; i++) {
+            String c1 = child.getBoard().get(i).get(y).toUpperCase();
+            String c2 = child.getBoard().get(i + 1).get(y).toUpperCase();
+            String c3 = child.getBoard().get(i + 2).get(y).toUpperCase();
+            if (c1.equals(c2) && c2.equals(c3) && !c1.equals("E")) {
+                return false;
+            } else if (c1.equals(c2) && c1.equals("W")) {
+                child.removeIndexDomain(i + 2, y, "w");
+            } else if (c1.equals(c3) && c1.equals("W")) {
+                child.removeIndexDomain(i + 1, y, "w");
+            } else if (c1.equals(c2) && c1.equals("B")) {
+                child.removeIndexDomain(i + 2, y, "b");
+            } else if (c1.equals(c3) && c1.equals("B")) {
+                child.removeIndexDomain(i + 1, y, "b");
+            }
+        }
+
+        //checkIfUnique
+        //check if two rows are duplicated
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int count = 0;
+                for (int k = 0; k < n; k++) {
+                    String a = child.getBoard().get(i).get(k);
+                    if (a.equals(child.getBoard().get(j).get(k)) && !a.equals("E")) {
+                        count++;
+                    }
+                }
+                if (count == n) {
+                    return false;
+                }
+            }
+        }
+
+        //check if two columns are duplicated
+        for (int j = 0; j < n - 1; j++) {
+            for (int k = j + 1; k < n; k++) {
+                int count = 0;
+                for (int i = 0; i < n; i++) {
+                    if (child.getBoard().get(i).get(j).equals(child.getBoard().get(i).get(k))) {
+                        count++;
+                    }
+                }
+                if (count == n) {
+                    return false;
+                }
+            }
+        }
+
         return true;
+    }
+
+    private boolean checkNumberOfCircles(State state) {
+        ArrayList<ArrayList<String>> cBoard = state.getBoard();
+        //row
+        for (int i = 0; i < n; i++) {
+            int numberOfWhites = 0;
+            int numberOfBlacks = 0;
+            for (int j = 0; j < n; j++) {
+                String a = cBoard.get(i).get(j);
+                switch (a) {
+                    case "w", "W" -> numberOfWhites++;
+                    case "b", "B" -> numberOfBlacks++;
+                }
+            }
+            if (numberOfBlacks > n / 2 || numberOfWhites > n / 2) {
+                return false;
+            }
+        }
+        //column
+        for (int i = 0; i < n; i++) {
+            int numberOfWhites = 0;
+            int numberOfBlacks = 0;
+            for (int j = 0; j < n; j++) {
+                String a = cBoard.get(j).get(i);
+                switch (a) {
+                    case "w", "W" -> numberOfWhites++;
+                    case "b", "B" -> numberOfBlacks++;
+                }
+            }
+            if (numberOfBlacks > n / 2 || numberOfWhites > n / 2) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkAdjacency(State state) {
+        ArrayList<ArrayList<String>> cBoard = state.getBoard();
+
+        //Horizontal
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - 2; j++) {
+                ArrayList<String> row = cBoard.get(i);
+                String c1 = row.get(j).toUpperCase();
+                String c2 = row.get(j + 1).toUpperCase();
+                String c3 = row.get(j + 2).toUpperCase();
+                if (c1.equals(c2) && c2.equals(c3) && !c1.equals("E")) {
+                    return false;
+                }
+            }
+        }
+        //column
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < n - 2; i++) {
+                String c1 = cBoard.get(i).get(j).toUpperCase();
+                String c2 = cBoard.get(i + 1).get(j).toUpperCase();
+                String c3 = cBoard.get(i + 2).get(j).toUpperCase();
+                if (c1.equals(c2) && c2.equals(c3) && !c1.equals("E")) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private boolean checkIfUnique(State state) {
+        ArrayList<ArrayList<String>> cBoard = state.getBoard();
+
+        //check if two rows are duplicated
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int count = 0;
+                for (int k = 0; k < n; k++) {
+                    String a = cBoard.get(i).get(k);
+                    if (a.equals(cBoard.get(j).get(k)) && !a.equals("E")) {
+                        count++;
+                    }
+                }
+                if (count == n) {
+                    return false;
+                }
+            }
+        }
+
+        //check if two columns are duplicated
+        for (int j = 0; j < n - 1; j++) {
+            for (int k = j + 1; k < n; k++) {
+                int count = 0;
+                for (int i = 0; i < n; i++) {
+                    if (cBoard.get(i).get(j).equals(cBoard.get(i).get(k))) {
+                        count++;
+                    }
+                }
+                if (count == n) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean isConsistent(State state) {
+        return checkNumberOfCircles(state) && checkAdjacency(state) && checkIfUnique(state);
     }
 }
