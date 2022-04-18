@@ -34,16 +34,25 @@ public class Binairo {
         State state;
         ArrayList<State> nextStates;
         Stack<State> stack = new Stack<State>();
+        initState.firstForwardChecking();
         stack.push(initState);
         while(!stack.empty()){
-            state = stack.pop();
+            state = stack.peek();
+            state.printBoard();
+            state.printDomain();
+            drawLine();
             if(isFinished(state)) {
                 state.printBoard();
                 return true;
             }
-            nextStates = state.children();
-            for(State s : nextStates)
-                stack.push(s);
+            nextStates = state.children(stack.size());
+            if(nextStates.size()==0){
+                stack.pop();
+            }
+            for(State s : nextStates) stack.push(s);
+//                s.printBoard();
+//                drawLine();
+           // }
         }
 
         return false;
