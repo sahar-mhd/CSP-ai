@@ -111,7 +111,7 @@ public class Binairo {
             }
             for (State s : nextStates) {
                 stack.push(s);
-                if (s.is==4 && s.js == 6){
+                if (s.is==3 && s.js == 1){
                     System.out.println();
                 }
             }

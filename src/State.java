@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.Stack;
 
 public class State {
     private static char blackCircle = '\u26AB';
@@ -26,6 +25,17 @@ public class State {
         this.n = board.size();
     }
 
+    public State(ArrayList<ArrayList<String>> board,
+                 ArrayList<ArrayList<ArrayList<String>>> domain, int i, int j , String val) {
+
+        this.board = board;
+        this.domain = domain;
+        this.n = board.size();
+        this.is = i;
+        this.js = j;
+        this. val = val;
+    }
+
     public ArrayList<ArrayList<String>> getBoard() {
         return board;
     }
@@ -45,7 +55,7 @@ public class State {
     public State copy() {
         ArrayList<ArrayList<String>> cb = copyBoard(board);
         ArrayList<ArrayList<ArrayList<String>>> cd = copyDomain(domain);
-        return (new State(cb, cd));
+        return (new State(cb, cd, is, js, val));
     }
 
     private ArrayList<ArrayList<String>> copyBoard(ArrayList<ArrayList<String>> cBoard) {
@@ -359,6 +369,7 @@ public class State {
         int m = n * n, x;
         int mini = 0, minj = 0;
         ArrayList<State> children = new ArrayList<>();
+        boolean sw = false;
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -375,6 +386,7 @@ public class State {
                             mini = i;
                             minj = j;
                             ch = child.copy();
+                            sw = true;
                         }
                     }
                     if (this.getDomain().get(i).get(j).contains("b")) {
@@ -389,6 +401,7 @@ public class State {
                             mini = i;
                             minj = j;
                             ch = child.copy();
+                            sw = true;
                         } else if (x == m) {
                             Binairo.backFrom = s;
                         }
@@ -396,12 +409,16 @@ public class State {
                 }
             }
         }
-        visited.put(ch.hash(), true);
-        ch.removeIndexDomain(mini, minj, "w");
-        ch.removeIndexDomain(mini, minj, "b");
-        ch.getDomain().get(mini).get(minj).add("n");
-        children.add(ch);
-        System.out.println(mini + " " + minj);
+        if(sw) {
+            visited.put(ch.hash(), true);
+            ch.removeIndexDomain(mini, minj, "w");
+            ch.removeIndexDomain(mini, minj, "b");
+            if (ch.getDomain().get(mini).get(minj).contains("")) {
+                ch.getDomain().get(mini).get(minj).set(0, "n");
+            } else ch.getDomain().get(mini).get(minj).add("n");
+            children.add(ch);
+            System.out.println(mini + " " + minj);
+        }
         return children;
     }
 
