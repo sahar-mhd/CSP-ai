@@ -45,7 +45,8 @@ public class Main {
                 
             } //Board and Domain initialized
             Binairo binairo = new Binairo(board, domain, n);
-            binairo.start();
+            //binairo.MRV();
+            binairo.LCV();
             reader.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
